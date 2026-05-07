@@ -17,6 +17,19 @@ function fmtBal(n) {
   return n.toPrecision(4)
 }
 
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+const CHAIN_LABELS = { arbitrum: 'ARB', optimism: 'OP', polygon: 'POL' }
+function chainLabel(chain) {
+  return CHAIN_LABELS[chain] ?? chain.toUpperCase()
+}
+
 // DustToken: {
 //   chain, tokenSymbol, humanAmount, usdValue, netValue,
 //   isRentAccounts?, walletAddress
@@ -41,18 +54,15 @@ export function renderTable(dustTokens) {
     const balDisplay = t.isRentAccounts
       ? `${t.humanAmount} accts`
       : fmtBal(t.humanAmount)
-    const chainLabel = t.chain === 'arbitrum' ? 'ARB'
-      : t.chain === 'optimism' ? 'OP'
-      : t.chain === 'polygon'  ? 'POL'
-      : t.chain.toUpperCase()
+    const label = escapeHtml(chainLabel(t.chain))
 
     return `<tr>
-      <td><span class="chain-badge" style="background:${bgColor}">${chainLabel}</span></td>
-      <td>${t.tokenSymbol}${t.isRentAccounts ? ' &#x1F511;' : ''}</td>
+      <td><span class="chain-badge" style="background:${bgColor}">${label}</span></td>
+      <td>${escapeHtml(t.tokenSymbol)}${t.isRentAccounts ? ' &#x1F511;' : ''}</td>
       <td>${balDisplay}</td>
       <td>$${fmt(t.usdValue)}</td>
       <td class="net-positive">+$${fmt(t.netValue)}</td>
-      <td><span style="color:#006600;font-size:10px">&#x2705; SWEEP</span></td>
+      <td><span style="color:#006600;font-size:10px">&#x2705; SWEEP</span></td><!-- Phase 2: replace with SWEEP/WAIT based on netValue > 0 -->
     </tr>`
   }).join('')
 
@@ -81,11 +91,7 @@ export function renderTicker(dustTokens) {
   const chainParts = chains.map(chain => {
     const chainTokens = dustTokens.filter(t => t.chain === chain)
     const chainTotal  = chainTokens.reduce((s, t) => s + t.usdValue, 0)
-    const label = chain === 'arbitrum' ? 'ARB'
-      : chain === 'optimism' ? 'OP'
-      : chain === 'polygon'  ? 'POL'
-      : chain.toUpperCase()
-    return `<span>${label}: <span class="tick-good">$${fmt(chainTotal)}</span></span>`
+    return `<span>${chainLabel(chain)}: <span class="tick-good">$${fmt(chainTotal)}</span></span>`
   }).join('<span class="tick-sep">|</span>')
 
   const sep = '<span class="tick-sep">&#x26A1;</span>'
