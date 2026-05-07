@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DustKit v1.0 - Dust Sweeper for Windows</title>
+<link rel="stylesheet" href="https://unpkg.com/98.css">
+<style>
+  body {
+    margin: 0;
+    padding: 8px;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    font-size: 11px;
+    background-color: #000010;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 40%, #aaf 0%, transparent 100%),
+      radial-gradient(1px 1px at 40% 8%,  #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 60%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 25%, #ffa 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 75%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 15% 80%, #aff 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 90%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 10%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 33% 55%, #faf 0%, transparent 100%),
+      radial-gradient(1px 1px at 78% 45%, #fff 0%, transparent 100%),
+      radial-gradient(2px 2px at 5%  30%, #fff 0%, transparent 100%),
+      radial-gradient(2px 2px at 95% 65%, #aaf 0%, transparent 100%),
+      radial-gradient(1px 1px at 48% 72%, #fff 0%, transparent 100%),
+      radial-gradient(1px 1px at 22% 22%, #ffa 0%, transparent 100%);
+    min-height: 100vh;
+    cursor: default;
+  }
+
+  .geo-header { text-align: center; padding: 4px 0 8px 0; }
+
+  .flaming-logo {
+    font-family: "Times New Roman", Times, serif;
+    font-size: clamp(24px, 5vw, 48px);
+    font-weight: bold;
+    font-style: italic;
+    color: #00ff41;
+    text-shadow: 0 0 10px #00ff41, 0 0 20px #00aa22, 2px 2px 0 #003300, 4px 4px 0 #001100;
+    letter-spacing: -1px;
+    display: inline-block;
+    animation: logoPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes logoPulse {
+    0%,100% { text-shadow: 0 0 10px #00ff41, 0 0 20px #00aa22, 2px 2px 0 #003300, 4px 4px 0 #001100; }
+    50%      { text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff41, 2px 2px 0 #003300, 4px 4px 0 #001100; }
+  }
+
+  .logo-sub {
+    font-family: "Courier New", Courier, monospace;
+    color: #00ff41;
+    font-size: clamp(9px, 1.5vw, 13px);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    display: block;
+    margin-top: -4px;
+  }
+
+  .geo-divider {
+    color: #00ff41;
+    font-size: clamp(10px, 1.5vw, 13px);
+    text-align: center;
+    letter-spacing: 2px;
+    margin: 2px 0;
+    font-family: "Courier New", Courier, monospace;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .visitor-badge {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9px;
+    color: #ffff00;
+    text-align: center;
+    margin: 2px 0;
+  }
+
+  .ticker-wrapper {
+    background: #000;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    margin: 4px 0;
+    padding: 2px 0;
+  }
+  marquee { font-family: "Courier New", Courier, monospace; font-size: clamp(10px, 1.5vw, 12px); color: #00ff41; }
+  .tick-sep  { color: #ffff00; margin: 0 8px; }
+  .tick-warn { color: #ff4400; }
+  .tick-good { color: #00ff88; }
+
+  .main-window {
+    max-width: 860px;
+    margin: 0 auto;
+    background: #c0c0c0;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+  }
+
+  .window-title-bar {
+    background: linear-gradient(90deg, #000080, #1084d0);
+    color: white;
+    font-weight: bold;
+    font-size: clamp(10px, 1.8vw, 12px);
+    padding: 3px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+  }
+  .title-left { display: flex; align-items: center; gap: 4px; }
+  .title-icon { font-size: 14px; }
+  .title-buttons { display: flex; gap: 2px; }
+  .title-btn {
+    width: 16px; height: 14px;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #ffffff #0a0a0a #0a0a0a #ffffff;
+    font-size: 9px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #000;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    font-weight: bold;
+    box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf;
+  }
+
+  .menu-bar {
+    background: #c0c0c0;
+    padding: 2px 4px;
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #808080;
+    flex-wrap: wrap;
+  }
+  .menu-item { padding: 2px 8px; font-size: clamp(10px, 1.5vw, 11px); cursor: pointer; font-family: "MS Sans Serif", Arial, sans-serif; }
+  .menu-item:hover { background: #000080; color: white; }
+  .menu-item u { text-decoration: underline; }
+
+  .toolbar {
+    background: #c0c0c0;
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    border-bottom: 1px solid #808080;
+    flex-wrap: wrap;
+  }
+  .tb-btn {
+    padding: 2px 6px;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #ffffff #0a0a0a #0a0a0a #ffffff;
+    font-size: clamp(9px, 1.4vw, 11px);
+    cursor: pointer;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf;
+    white-space: nowrap;
+  }
+  .tb-btn:active {
+    border-color: #0a0a0a #ffffff #ffffff #0a0a0a;
+    box-shadow: inset 1px 1px #808080;
+    padding: 3px 5px 1px 7px;
+  }
+  .tb-separator { width: 1px; height: 22px; background: #808080; margin: 0 3px; border-right: 1px solid #fff; }
+  .tb-label { font-size: 9px; color: #444; font-family: "MS Sans Serif", Arial, sans-serif; }
+
+  .content-area { padding: 4px; background: #c0c0c0; }
+
+  .panel {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #0a0a0a;
+    margin-bottom: 4px;
+  }
+  .panel-title {
+    background: #000080;
+    color: #fff;
+    font-size: clamp(9px, 1.4vw, 11px);
+    font-weight: bold;
+    padding: 1px 4px;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-content { padding: 4px; }
+
+  .balance-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: "Courier New", Courier, monospace;
+    font-size: clamp(9px, 1.4vw, 11px);
+  }
+  .balance-table th {
+    background: #000080;
+    color: white;
+    padding: 2px 4px;
+    text-align: left;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    font-size: clamp(9px, 1.3vw, 10px);
+    white-space: nowrap;
+    border-right: 1px solid #808080;
+  }
+  .balance-table td {
+    padding: 2px 4px;
+    border-bottom: 1px solid #808080;
+    border-right: 1px solid #808080;
+    background: #ffffff;
+    white-space: nowrap;
+  }
+  .balance-table tr:nth-child(even) td { background: #f0f0f0; }
+  .balance-table tr:hover td { background: #000080; color: #fff; }
+  .balance-table tfoot td { background: #c0c0c0; font-weight: bold; }
+
+  .net-positive { color: #006600; font-weight: bold; }
+  .net-negative { color: #cc0000; }
+
+  .chain-badge {
+    font-size: 9px;
+    padding: 1px 3px;
+    background: #c0c0c0;
+    border: 1px solid #808080;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+  }
+
+  .two-col { display: flex; gap: 4px; flex-wrap: wrap; }
+  .two-col > * { flex: 1; min-width: 200px; }
+
+  .ledger-inner {
+    background: #000;
+    font-family: "Courier New", Courier, monospace;
+    font-size: clamp(9px, 1.3vw, 11px);
+    color: #00ff41;
+    padding: 4px;
+    height: 120px;
+    overflow-y: auto;
+    border: 2px solid;
+    border-color: #0a0a0a #808080 #808080 #0a0a0a;
+  }
+  .ledger-line { margin: 1px 0; }
+  .ledger-prompt { color: #ffff00; }
+  .ledger-ok { color: #aaffaa; }
+  .ledger-total { color: #00ffff; font-weight: bold; border-top: 1px solid #00ff41; margin-top: 4px; padding-top: 2px; }
+  .ledger-empty { color: #555; font-style: italic; }
+
+  /* Phase 2/3 panels — hidden until those phases are implemented */
+  #gas-panel     { display: none; }
+  #sweep-section { display: none; }
+
+  .sweep-section {
+    text-align: center;
+    padding: 6px 4px;
+    background: #c0c0c0;
+    border-top: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+  }
+  .sweep-btn {
+    padding: 6px 24px;
+    font-size: clamp(12px, 2vw, 16px);
+    font-weight: bold;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #0a0a0a #0a0a0a #ffffff;
+    box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf, 3px 3px 0 #000;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #000080;
+    text-shadow: 1px 1px 0 #fff;
+  }
+
+  .status-bar {
+    display: flex;
+    border-top: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: #c0c0c0;
+    padding: 1px 2px;
+    gap: 2px;
+    flex-wrap: wrap;
+  }
+  .status-cell {
+    flex: 1;
+    min-width: 80px;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    font-size: clamp(8px, 1.2vw, 10px);
+    padding: 1px 4px;
+    border: 1px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    box-shadow: inset -1px 0 #0a0a0a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .status-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-right: 3px;
+    vertical-align: middle;
+  }
+  .dot-green   { background: #00cc00; }
+  .dot-yellow  { background: #ffcc00; }
+  .dot-grey    { background: #888888; }
+
+  .geo-footer { text-align: center; padding: 8px 0 4px 0; font-family: "Courier New", Courier, monospace; }
+  .geo-footer a { color: #00ffff; font-size: 9px; text-decoration: none; margin: 0 4px; }
+  .geo-footer a:hover { color: #ffff00; }
+
+  .construction-gif { font-size: 18px; animation: spin 2s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .blinkme { animation: blink 1s step-end infinite; color: #ffff00; font-size: 9px; font-family: "Courier New", Courier, monospace; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .sunken {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    box-shadow: inset 1px 1px #0a0a0a;
+    background: #fff;
+    padding: 2px 4px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 11px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .threshold-val { font-family: "Courier New", Courier, monospace; font-size: 12px; color: #000080; font-weight: bold; min-width: 40px; }
+
+  @media (max-width: 600px) {
+    body { padding: 0; }
+    .main-window { border-left: none; border-right: none; }
+    .balance-table th:nth-child(5),
+    .balance-table td:nth-child(5) { display: none; }
+    .toolbar .tb-label { display: none; }
+    .two-col { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- GEOCITIES HEADER -->
+<div class="geo-header">
+  <div class="flaming-logo">&#x1F9F9; DustKit</div>
+  <span class="logo-sub">v1.0 &mdash; Cross-Chain Dust Sweeper</span>
+</div>
+
+<div class="geo-divider">&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;</div>
+
+<!-- LIVE TICKER — written by ui.js renderTicker() -->
+<div class="ticker-wrapper">
+  <marquee id="ticker-marquee" behavior="scroll" direction="left" scrollamount="3">
+    <span style="color:#555">Loading dust data...</span>
+  </marquee>
+</div>
+
+<!-- WIN98 MAIN WINDOW -->
+<div class="main-window">
+
+  <!-- Title Bar -->
+  <div class="window-title-bar">
+    <div class="title-left">
+      <span class="title-icon">&#x1F9F9;</span>
+      <span>DustKit v1.0 &mdash; Dust Sweeper</span>
+    </div>
+    <div class="title-buttons">
+      <div class="title-btn">&#x2014;</div>
+      <div class="title-btn">&#x25A1;</div>
+      <div class="title-btn" style="color:#cc0000">&#x2715;</div>
+    </div>
+  </div>
+
+  <!-- Menu Bar -->
+  <div class="menu-bar">
+    <div class="menu-item"><u>F</u>ile</div>
+    <div class="menu-item"><u>W</u>allets</div>
+    <div class="menu-item"><u>S</u>weep</div>
+    <div class="menu-item"><u>R</u>outes</div>
+    <div class="menu-item"><u>L</u>edger</div>
+    <div class="menu-item"><u>H</u>elp</div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="tb-btn" onclick="window.dustkitRefresh()">&#x1F504; Refresh</button>
+    <button class="tb-btn">&#x1F4BE; Save Profile</button>
+    <button class="tb-btn">&#x1F4C2; Load Profile</button>
+    <div class="tb-separator"></div>
+    <button class="tb-btn" style="color:#006600">&#x1F4B0; Sweep All</button>
+    <button class="tb-btn" style="color:#880000">&#x1F6AB; Abort</button>
+    <div class="tb-separator"></div>
+    <button class="tb-btn" style="color:#800080;font-weight:bold">&#x266B; MIDI: OFF</button>
+    <div class="tb-separator"></div>
+    <span class="tb-label">Threshold: </span>
+    <input type="range" id="threshold-slider" min="1" max="50" value="5" style="width:80px">
+    <span class="threshold-val" id="thresh-val">$5</span>
+  </div>
+
+  <div class="content-area">
+
+    <!-- Wallet Addresses Panel -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>&#x1F4BC; Wallet Addresses</span>
+        <span style="font-size:9px;font-weight:normal">NON-CUSTODIAL &mdash; READ ONLY</span>
+      </div>
+      <div class="panel-content">
+        <table width="100%" cellpadding="2" cellspacing="2" border="0">
+          <tr>
+            <td width="60" style="font-family:'MS Sans Serif',Arial,sans-serif;font-size:10px;">EVM 1</td>
+            <td><input class="sunken" id="wallet-evm-0" type="text" readonly></td>
+          </tr>
+          <tr>
+            <td style="font-family:'MS Sans Serif',Arial,sans-serif;font-size:10px;">EVM 2</td>
+            <td><input class="sunken" id="wallet-evm-1" type="text" readonly></td>
+          </tr>
+          <tr>
+            <td style="font-family:'MS Sans Serif',Arial,sans-serif;font-size:10px;">Solana</td>
+            <td><input class="sunken" id="wallet-sol-0" type="text" readonly></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Dust Inventory Table -->
+    <div class="panel">
+      <div class="panel-title">
+        <span>&#x1F4CA; Dust Inventory &mdash; Below <span id="threshold-display">$5.00</span> threshold</span>
+        <span style="font-size:9px;font-weight:normal" id="dust-summary">Loading...</span>
+      </div>
+      <div class="panel-content" style="overflow-x:auto">
+        <table class="balance-table" cellspacing="0" cellpadding="0" border="0">
+          <thead>
+            <tr>
+              <th>CHAIN</th>
+              <th>TOKEN</th>
+              <th>BALANCE</th>
+              <th>USD VALUE</th>
+              <th>NET VALUE</th>
+              <th>STATUS</th>
+            </tr>
+          </thead>
+          <tbody id="dust-table-body">
+            <tr><td colspan="6" style="text-align:center;color:#888;font-style:italic">Loading...</td></tr>
+          </tbody>
+          <tfoot id="dust-table-foot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bottom 2-column panels -->
+    <div class="two-col">
+
+      <!-- Dust Ledger -->
+      <div class="panel">
+        <div class="panel-title">
+          <span>&#x1F4DC; Dust Ledger &mdash; All Time</span>
+        </div>
+        <div class="panel-content">
+          <div class="ledger-inner" id="ledger-inner">
+            <span class="ledger-empty">No sweeps recorded yet.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gas Tracker — Phase 2, hidden -->
+      <div class="panel" id="gas-panel">
+        <div class="panel-title">
+          <span>&#x26FD; Gas Tracker &mdash; Live</span>
+          <span style="font-size:9px;font-weight:normal">AUTO-REFRESH 30s</span>
+        </div>
+        <div class="panel-content" id="gas-content">
+          <!-- Phase 2: populated by ui.js renderGas() -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sweep Action — Phase 3, hidden -->
+    <div class="sweep-section" id="sweep-section">
+      <div style="font-family:'Courier New',monospace;font-size:clamp(11px,1.8vw,14px);color:#006600;font-weight:bold;margin-bottom:4px">
+        &#x1F9F9; NET RECOVERABLE: <span id="sweep-net-value">$0.00</span> &rarr; Master Wallet (<span id="sweep-master-wallet"></span>)
+      </div>
+      <button class="sweep-btn">&#x1F9F9; SWEEP DUST</button>
+      <div style="font-family:'MS Sans Serif',Arial,sans-serif;font-size:9px;color:#444;margin-top:3px" id="sweep-confirm"></div>
+    </div>
+
+  </div><!-- end content-area -->
+
+  <!-- Status Bar — written by ui.js renderStatusBar() -->
+  <div class="status-bar" id="status-bar">
+    <div class="status-cell"><span class="status-dot dot-grey"></span>Loading...</div>
+  </div>
+
+</div><!-- end main-window -->
+
+<!-- GEOCITIES FOOTER -->
+<div class="geo-divider" style="margin-top:6px">&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;&#x2605;</div>
+
+<div class="geo-footer">
+  <div style="margin-bottom:4px">
+    <span class="construction-gif">&#x1F6A7;</span>
+    <span class="blinkme">&nbsp; UNDER CONSTRUCTION &nbsp;</span>
+    <span class="construction-gif">&#x1F6A7;</span>
+  </div>
+  <div class="visitor-badge">&#x1F464; VISITORS: 000001337 &nbsp;|&nbsp; BEST VIEWED IN NETSCAPE NAVIGATOR 4.0 AT 800x600 &nbsp;|&nbsp; NON-CUSTODIAL SINCE 2025</div>
+  <div style="margin-top:4px">
+    <a href="#">[SOURCE]</a>
+    <a href="#">[GITHUB]</a>
+    <a href="#">[PRIVACY]</a>
+    <a href="#">[REPORT BUG]</a>
+    <a href="#">[WEB RING]</a>
+  </div>
+  <div style="margin-top:4px">
+    <marquee behavior="alternate" scrollamount="2">
+      <span style="color:#ff00ff;font-size:9px;font-family:'Courier New',Courier,monospace">
+        &#x2665; MADE WITH LOVE AND NOSTALGIA &#x2665; YOUR KEYS YOUR CRYPTO &#x2665; DUST IS MONEY &#x2665;
+      </span>
+    </marquee>
+  </div>
+</div>
+
+<!-- Config must load before app.js so window.DUSTKIT_CONFIG is available -->
+<script src="config.js"></script>
+<script type="module" src="src/app.js"></script>
+
+</body>
+</html>
