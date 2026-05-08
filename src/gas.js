@@ -8,30 +8,61 @@ const CHAIN_IDS = {
   optimism: 10,
 }
 
+async function fetchWithTimeout(url, timeoutMs = 5000) {
+  const controller = new AbortController()
+  const id = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { signal: controller.signal })
+  } finally {
+    clearTimeout(id)
+  }
+}
+
 async function fetchEthPrice() {
-  const res = await fetch(
-    'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
-  )
-  const data = await res.json()
-  return data.ethereum.usd
+  try {
+    const res = await fetchWithTimeout(
+      'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
+    )
+    const data = await res.json()
+    const price = data?.ethereum?.usd
+    return typeof price === 'number' ? price : null
+  } catch {
+    return null
+  }
 }
 
 async function fetchChainGas(chain, chainId, apiKey, ethPriceUSD) {
   const url = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=gastracker&action=gasoracle&apikey=${apiKey}`
-  const res = await fetch(url)
-  const data = await res.json()
-  if (data.status !== '1') return null
+  try {
+    const res = await fetchWithTimeout(url)
+    const data = await res.json()
+    if (data.status !== '1') return null
 
-  const gwei = parseFloat(data.result.ProposeGasPrice)
-  const usdCost = (gwei * GAS_LIMIT / 1e9) * ethPriceUSD
-  return { gwei, usdCost }
+    const gasPrice = data.result?.ProposeGasPrice
+    if (!gasPrice) return null
+    const gwei = parseFloat(gasPrice)
+    if (!isFinite(gwei)) return null
+
+    const usdCost = (gwei * GAS_LIMIT / 1e9) * ethPriceUSD
+    return { gwei, usdCost }
+  } catch (err) {
+    console.warn(`[gas] ${chain} fetch failed:`, err.message)
+    return null
+  }
 }
 
 // GasMap: { [chain: string]: { gwei: number, usdCost: number } | null }
-// null means fetch failed — treat as unknown gas cost in computeDust
+// null means fetch failed — computeDust treats null gas as "cost unknown"
 export async function fetchGasCosts(config) {
   const apiKey = config.etherscanKey
   const ethPriceUSD = await fetchEthPrice()
+
+  if (ethPriceUSD === null) {
+    console.warn('[gas] ETH price fetch failed — gas costs unavailable')
+    const gasMap = { solana: { gwei: 0, usdCost: 0.001 } }
+    for (const chain of Object.keys(CHAIN_IDS)) gasMap[chain] = null
+    return gasMap
+  }
 
   const results = await Promise.allSettled(
     Object.entries(CHAIN_IDS).map(async ([chain, chainId]) => {
@@ -40,7 +71,7 @@ export async function fetchGasCosts(config) {
     })
   )
 
-  const gasMap = { solana: { gwei: 0, usdCost: 0.001 } } // Solana fee is flat ~$0.001
+  const gasMap = { solana: { gwei: 0, usdCost: 0.001 } }
   for (const result of results) {
     if (result.status === 'fulfilled') {
       const [chain, gas] = result.value
