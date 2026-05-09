@@ -1,7 +1,8 @@
 import { fetchBalances } from './balances.js'
 import { fetchPrices }   from './prices.js'
+import { fetchGasCosts } from './gas.js'
 import { getLedger }     from './ledger.js'
-import { renderTable, renderTicker, renderStatusBar, renderLedger, renderWallets } from './ui.js'
+import { renderTable, renderTicker, renderStatusBar, renderLedger, renderWallets, renderGas } from './ui.js'
 
 // gasMap: { [chain]: { gwei: number, usdCost: number } | null }
 function computeDust(balances, prices, threshold, gasMap) {
@@ -28,16 +29,22 @@ function computeDust(balances, prices, threshold, gasMap) {
 }
 
 async function fetchAndRender(config, applyThreshold) {
-  renderStatusBar({ alchemy: 'mock', helius: 'mock', coingecko: 'mock', lifi: 'pending' })
+  renderStatusBar({ alchemy: 'mock', helius: 'mock', coingecko: 'live', lifi: 'pending' })
   renderLedger(getLedger())
 
   try {
-    // TODO (Phase 2+): cache responses (CoinGecko: 60s TTL, balances: on manual refresh only)
     const balances = await fetchBalances(config.wallets)
     const symbols = [...new Set(balances.map(b => b.tokenSymbol))]
-    const prices = await fetchPrices(symbols)
-    applyThreshold(config.dustThreshold, balances, prices)
-    return { balances, prices }
+
+    // Fetch prices and gas in parallel — both are independent
+    const [prices, gasMap] = await Promise.all([
+      fetchPrices(symbols),
+      fetchGasCosts(config)
+    ])
+
+    renderGas(gasMap)
+    applyThreshold(config.dustThreshold, balances, prices, gasMap)
+    renderStatusBar({ alchemy: 'mock', helius: 'mock', coingecko: 'live', lifi: 'pending' })
   } catch (err) {
     renderStatusBar({ alchemy: 'error', helius: 'error', coingecko: 'error', lifi: 'pending' })
     const tbody = document.getElementById('dust-table-body')
@@ -56,10 +63,12 @@ async function setup() {
   document.getElementById('threshold-display').textContent = `$${config.dustThreshold.toFixed(2)}`
 
   let state = { balances: [], prices: {} }
+  let currentGasMap = {}
 
-  function applyThreshold(threshold, balances, prices) {
+  function applyThreshold(threshold, balances, prices, gasMap) {
     if (balances !== undefined) state = { balances, prices }
-    const dustTokens = computeDust(state.balances, state.prices, threshold, {})
+    if (gasMap !== undefined) currentGasMap = gasMap
+    const dustTokens = computeDust(state.balances, state.prices, threshold, currentGasMap)
     renderTable(dustTokens)
     renderTicker(dustTokens)
     document.getElementById('thresh-val').textContent = `$${threshold}`
