@@ -1,8 +1,9 @@
-import { fetchBalances } from './balances.js'
-import { fetchPrices }   from './prices.js'
-import { fetchGasCosts } from './gas.js'
-import { getLedger }     from './ledger.js'
-import { renderTable, renderTicker, renderStatusBar, renderLedger, renderWallets, renderGas } from './ui.js'
+import { fetchBalances }       from './balances.js'
+import { fetchPrices }         from './prices.js'
+import { fetchGasCosts }       from './gas.js'
+import { getLedger }           from './ledger.js'
+import { fetchRentReclaimable } from './solana-rent.js'
+import { renderTable, renderTicker, renderStatusBar, renderLedger, renderWallets, renderGas, renderSolanaRent } from './ui.js'
 
 // gasMap: { [chain]: { gwei: number, usdCost: number } | null }
 function computeDust(balances, prices, threshold, gasMap) {
@@ -44,7 +45,27 @@ async function fetchAndRender(config, applyThreshold) {
 
     renderGas(gasMap)
     applyThreshold(config.dustThreshold, balances, prices, gasMap)
-    renderStatusBar({ alchemy: 'mock', helius: 'mock', coingecko: 'live', lifi: 'pending' })
+
+    // Fetch Solana rent reclaimable for each Solana wallet
+    const solPriceUSD = prices['SOL'] ?? prices['WSOL'] ?? 0
+    const rentResults = await Promise.allSettled(
+      (config.wallets.solana ?? []).map(wallet =>
+        fetchRentReclaimable(wallet, config.heliusKey, solPriceUSD)
+      )
+    )
+    const rentSummary = rentResults
+      .filter(r => r.status === 'fulfilled')
+      .map(r => r.value)
+      .reduce(
+        (acc, r) => ({
+          accountCount: acc.accountCount + r.accountCount,
+          estimatedUSD: acc.estimatedUSD + r.estimatedUSD,
+        }),
+        { accountCount: 0, estimatedUSD: 0 }
+      )
+    renderSolanaRent(rentSummary)
+
+    renderStatusBar({ alchemy: 'live', helius: 'live', coingecko: 'live', lifi: 'pending' })
   } catch (err) {
     renderStatusBar({ alchemy: 'error', helius: 'error', coingecko: 'error', lifi: 'pending' })
     const tbody = document.getElementById('dust-table-body')

@@ -217,3 +217,32 @@ export function renderGas(gasMap) {
     Gas cost estimate based on 150k gas units per swap
   </div>`
 }
+
+// rentSummary: { accountCount: number, estimatedUSD: number }
+export function renderSolanaRent(rentSummary) {
+  let banner = document.getElementById('rent-banner')
+  if (!banner) {
+    banner = document.createElement('div')
+    banner.id = 'rent-banner'
+    banner.className = 'panel'
+    banner.style.cssText = 'margin-bottom:4px'
+    const dustPanel = document.querySelector('#dust-panel')
+    if (dustPanel) dustPanel.after(banner)
+  }
+
+  if (!rentSummary || !rentSummary.accountCount) {
+    banner.style.display = 'none'
+    return
+  }
+
+  banner.style.display = ''
+  banner.innerHTML = `
+    <div class="panel-title">
+      <span>&#x1F511; Solana Rent Reclaimable</span>
+      <span style="font-size:9px;font-weight:normal">PHASE 3: reclaim via Phantom</span>
+    </div>
+    <div class="panel-content" style="font-family:'Courier New',monospace;font-size:11px;color:#006600;font-weight:bold">
+      ${rentSummary.accountCount} dead token accounts &rarr;
+      <strong>~$${fmt(rentSummary.estimatedUSD)}</strong> reclaimable SOL rent
+    </div>`
+}
