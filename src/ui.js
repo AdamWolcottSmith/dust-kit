@@ -153,3 +153,49 @@ export function renderWallets(wallets) {
     if (el) el.value = addr
   })
 }
+
+// gasMap: { [chain]: { gwei: number, usdCost: number } | null }
+export function renderGas(gasMap) {
+  const content = document.getElementById('gas-content')
+  if (!content) return
+
+  const chains = [
+    { key: 'eth',      label: 'ETH',  color: '#0000cc' },
+    { key: 'arbitrum', label: 'ARB',  color: '#009900' },
+    { key: 'base',     label: 'BASE', color: '#0055ff' },
+    { key: 'polygon',  label: 'POL',  color: '#6600cc' },
+    { key: 'optimism', label: 'OP',   color: '#cc0000' },
+    { key: 'solana',   label: 'SOL',  color: '#9900cc' },
+  ]
+
+  const maxGwei = Math.max(
+    1,
+    ...chains.map(c => gasMap[c.key]?.gwei ?? 0)
+  )
+
+  content.innerHTML = chains.map(({ key, label, color }) => {
+    const gas = gasMap[key]
+    if (!gas) return `
+      <div style="display:flex;align-items:center;gap:4px;margin:3px 0;font-family:'Courier New',monospace;font-size:clamp(9px,1.3vw,11px)">
+        <span style="width:60px;color:#000;font-size:10px">${label}</span>
+        <span style="color:#888;font-style:italic;font-size:9px">unavailable</span>
+      </div>`
+
+    const pct = Math.min(100, (gas.gwei / maxGwei) * 100)
+    const statusColor = gas.gwei < 20 ? '#00aa00' : gas.gwei < 60 ? '#ff8800' : '#cc0000'
+    const statusText  = gas.gwei < 20 ? 'LOW' : gas.gwei < 60 ? 'MED' : 'HIGH'
+
+    return `
+      <div style="display:flex;align-items:center;gap:4px;margin:3px 0;font-family:'Courier New',monospace;font-size:clamp(9px,1.3vw,11px)">
+        <span style="width:60px;color:#000;font-size:10px;font-family:'MS Sans Serif',Arial,sans-serif">${label}</span>
+        <div style="flex:1;height:14px;background:#fff;border:2px solid;border-color:#0a0a0a #ffffff #ffffff #0a0a0a;box-shadow:inset 1px 1px #808080;position:relative">
+          <div style="height:100%;width:${pct}%;background:${color};position:absolute;left:0;top:0"></div>
+        </div>
+        <span style="font-family:'Courier New',monospace;font-size:10px;width:70px;text-align:right">${key === 'solana' ? '~$0.001' : gas.gwei.toFixed(1) + ' gwei'}</span>
+        <span style="font-size:9px;width:36px;text-align:center;padding:1px 2px;background:${statusColor};color:#fff;font-family:'MS Sans Serif',Arial,sans-serif">${statusText}</span>
+      </div>`
+  }).join('') +
+  `<div style="padding:4px 0 0 0;font-family:'Courier New',monospace;font-size:9px;color:#444">
+    Gas cost estimate based on 150k gas units per swap
+  </div>`
+}
