@@ -22,7 +22,7 @@ function computeDust(balances, prices, threshold, gasMap) {
         usdValue,
         gasEstimate,
         netValue,
-        shouldSweep: gasEstimate !== null ? netValue > 0 : true
+        shouldSweep: gasEstimate !== null ? netValue > 0 : false
       }
     })
     .filter(t => t.usdValue > 0 && t.usdValue < threshold)
@@ -60,8 +60,9 @@ async function fetchAndRender(config, applyThreshold) {
         (acc, r) => ({
           accountCount: acc.accountCount + r.accountCount,
           estimatedUSD: acc.estimatedUSD + r.estimatedUSD,
+          accountPubkeys: [...acc.accountPubkeys, ...(r.accountPubkeys ?? [])],
         }),
-        { accountCount: 0, estimatedUSD: 0 }
+        { accountCount: 0, estimatedUSD: 0, accountPubkeys: [] }
       )
     renderSolanaRent(rentSummary)
 

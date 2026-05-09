@@ -66,9 +66,11 @@ export function renderTable(dustTokens) {
         : `<span class="net-negative">-$${fmt(Math.abs(t.netValue))}</span>`
       : `<span style="color:#888">$${fmt(t.usdValue)}</span>`
 
-    const statusCell = t.shouldSweep
-      ? `<span style="color:#006600;font-size:10px">&#x2705; SWEEP</span>`
-      : `<span style="color:#cc0000;font-size:10px">&#x26A0; WAIT</span>`
+    const statusCell = t.gasEstimate === null
+      ? `<span style="color:#888;font-size:10px">&#x2753; UNKNOWN</span>`
+      : t.shouldSweep
+        ? `<span style="color:#006600;font-size:10px">&#x2705; SWEEP</span>`
+        : `<span style="color:#cc0000;font-size:10px">&#x26A0; WAIT</span>`
 
     const rowStyle = t.shouldSweep ? '' : 'opacity:0.5'
 

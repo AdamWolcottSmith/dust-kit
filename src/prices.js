@@ -46,7 +46,10 @@ export async function fetchPrices(symbols) {
   const res = await fetch(
     `https://api.coingecko.com/api/v3/simple/price?ids=${uniqueIds.join(',')}&vs_currencies=usd`
   )
-  if (!res.ok) throw new Error(`CoinGecko HTTP ${res.status}`)
+  if (!res.ok) {
+    console.warn(`[prices] CoinGecko HTTP ${res.status} — ${priceCache ? 'using stale cache' : 'returning empty prices'}`)
+    return priceCache ?? {}
+  }
   const data = await res.json()
 
   const prices = {}
