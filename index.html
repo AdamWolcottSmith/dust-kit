@@ -215,8 +215,8 @@
   .balance-table tr:hover td { background: #000080; color: #fff; }
   .balance-table tfoot td { background: #c0c0c0; font-weight: bold; }
 
-  .net-positive { color: #006600; font-weight: bold; }
-  .net-negative { color: #cc0000; }
+  .net-positive { color: #006600; font-weight: bold; font-family: 'Courier New', monospace; }
+  .net-negative { color: #cc0000; font-weight: bold; font-family: 'Courier New', monospace; }
 
   .chain-badge {
     font-size: 9px;
@@ -446,12 +446,13 @@
               <th>TOKEN</th>
               <th>BALANCE</th>
               <th>USD VALUE</th>
+              <th>GAS COST</th>
               <th>NET VALUE</th>
               <th>STATUS</th>
             </tr>
           </thead>
           <tbody id="dust-table-body">
-            <tr><td colspan="6" style="text-align:center;color:#888;font-style:italic">Loading...</td></tr>
+            <tr><td colspan="7" style="text-align:center;color:#888;font-style:italic">Loading...</td></tr>
           </tbody>
           <tfoot id="dust-table-foot"></tfoot>
         </table>

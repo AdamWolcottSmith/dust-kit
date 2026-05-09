@@ -3,21 +3,24 @@ import { fetchPrices }   from './prices.js'
 import { getLedger }     from './ledger.js'
 import { renderTable, renderTicker, renderStatusBar, renderLedger, renderWallets } from './ui.js'
 
-function computeDust(balances, prices, threshold) {
+// gasMap: { [chain]: { gwei: number, usdCost: number } | null }
+function computeDust(balances, prices, threshold, gasMap) {
   return balances
     .map(b => {
       const price = prices[b.tokenSymbol] ?? 0
-      // isRentAccounts: rawBalance is the count of dead accounts, each worth prices.RENT
       const humanAmount = b.isRentAccounts
         ? Number(b.rawBalance)
         : Number(BigInt(b.rawBalance) * 10000n / BigInt(10 ** b.decimals)) / 10000
       const usdValue = humanAmount * price
+      const gasEstimate = gasMap[b.chain]?.usdCost ?? null
+      const netValue = gasEstimate !== null ? usdValue - gasEstimate : usdValue
       return {
         ...b,
         humanAmount,
         usdValue,
-        gasEstimate: null, // Phase 2: subtract real gas cost here
-        netValue: usdValue // Phase 2: netValue = usdValue - gasEstimate
+        gasEstimate,
+        netValue,
+        shouldSweep: gasEstimate !== null ? netValue > 0 : true
       }
     })
     .filter(t => t.usdValue > 0 && t.usdValue < threshold)
@@ -38,7 +41,7 @@ async function fetchAndRender(config, applyThreshold) {
   } catch (err) {
     renderStatusBar({ alchemy: 'error', helius: 'error', coingecko: 'error', lifi: 'pending' })
     const tbody = document.getElementById('dust-table-body')
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#cc0000;background:#fff">Error loading data. Click Refresh to retry.</td></tr>`
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#cc0000;background:#fff">Error loading data. Click Refresh to retry.</td></tr>`
     throw err
   }
 }
@@ -56,7 +59,7 @@ async function setup() {
 
   function applyThreshold(threshold, balances, prices) {
     if (balances !== undefined) state = { balances, prices }
-    const dustTokens = computeDust(state.balances, state.prices, threshold)
+    const dustTokens = computeDust(state.balances, state.prices, threshold, {})
     renderTable(dustTokens)
     renderTicker(dustTokens)
     document.getElementById('thresh-val').textContent = `$${threshold}`

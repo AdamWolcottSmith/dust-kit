@@ -40,7 +40,7 @@ export function renderTable(dustTokens) {
   const summary = document.getElementById('dust-summary')
 
   if (dustTokens.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;font-style:italic;background:#fff">No dust found below threshold.</td></tr>'
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;font-style:italic;background:#fff">No dust found below threshold.</td></tr>'
     tfoot.innerHTML = ''
     summary.textContent = '0 tokens found'
     return
@@ -54,21 +54,39 @@ export function renderTable(dustTokens) {
     const balDisplay = t.isRentAccounts
       ? `${t.humanAmount} accts`
       : fmtBal(t.humanAmount)
-    const label = escapeHtml(chainLabel(t.chain))
+    const label = chainLabel(t.chain)
 
-    return `<tr>
-      <td><span class="chain-badge" style="background:${bgColor}">${label}</span></td>
+    const gasCell = t.gasEstimate !== null
+      ? `$${fmt(t.gasEstimate)}`
+      : '<span style="color:#888">—</span>'
+
+    const netCell = t.gasEstimate !== null
+      ? t.shouldSweep
+        ? `<span class="net-positive">+$${fmt(t.netValue)}</span>`
+        : `<span class="net-negative">-$${fmt(Math.abs(t.netValue))}</span>`
+      : `<span style="color:#888">$${fmt(t.usdValue)}</span>`
+
+    const statusCell = t.shouldSweep
+      ? `<span style="color:#006600;font-size:10px">&#x2705; SWEEP</span>`
+      : `<span style="color:#cc0000;font-size:10px">&#x26A0; WAIT</span>`
+
+    const rowStyle = t.shouldSweep ? '' : 'opacity:0.5'
+
+    return `<tr style="${rowStyle}">
+      <td><span class="chain-badge" style="background:${bgColor}">${escapeHtml(label)}</span></td>
       <td>${escapeHtml(t.tokenSymbol)}${t.isRentAccounts ? ' &#x1F511;' : ''}</td>
       <td>${balDisplay}</td>
       <td>$${fmt(t.usdValue)}</td>
-      <td class="net-positive">+$${fmt(t.netValue)}</td>
-      <td><span style="color:#006600;font-size:10px">&#x2705; SWEEP</span></td><!-- Phase 2: replace with SWEEP/WAIT based on netValue > 0 -->
+      <td>${gasCell}</td>
+      <td>${netCell}</td>
+      <td>${statusCell}</td>
     </tr>`
   }).join('')
 
   tfoot.innerHTML = `<tr>
     <td colspan="3" style="font-family:'MS Sans Serif',Arial,sans-serif;font-size:10px;font-weight:bold">TOTAL</td>
     <td style="font-family:'Courier New',monospace;font-weight:bold">$${fmt(totalUSD)}</td>
+    <td style="font-family:'Courier New',monospace;font-weight:bold;color:#cc0000">$${fmt(dustTokens.reduce((s,t) => s + (t.gasEstimate ?? 0), 0))}</td>
     <td style="font-family:'Courier New',monospace;font-weight:bold;color:#006600">+$${fmt(totalNet)}</td>
     <td></td>
   </tr>`
