@@ -45,18 +45,34 @@ python3 -m http.server 8080
 
 ---
 
-## Phase 2: Evaluate It ⬜ NEXT
+## Phase 2: Evaluate It ✅ COMPLETE
 
-**Goal:** Real gas costs, net value calculation, WAIT/SWEEP logic
+**Shipped:** 2026-05-08
+**Commits:** 16 (aa99227 → d8f136d)
 
-- [ ] Wire Etherscan Gas API in `src/gas.js` (per chain)
-- [ ] Net value calc: `dustUSD − gasCostUSD` in `computeDust()`
-- [ ] WAIT row style: grey + ⚠️ label when netValue < 0
-- [ ] Reveal `#gas-panel` in UI (remove `display:none`)
-- [ ] Wire real Alchemy API in `src/balances.js`
-- [ ] Wire real Helius API in `src/balances.js`
-- [ ] Wire real CoinGecko API in `src/prices.js`
-- [ ] Solana rent reclaim module (`src/solana-rent.js`)
+### What's working
+- Live Alchemy EVM balances — 3 wallets × 5 chains in parallel
+- Live Helius Solana balances — SPL tokens priced via Jupiter Price API
+- Live CoinGecko prices — 60s cache, 20+ token mapping
+- Live Etherscan V2 gas tracker — single key, all EVM chains via chainid param
+- Polygon gas correctly uses MATIC/USD (not ETH/USD)
+- Net value calc: `dustUSD − gasCostUSD` in `computeDust()`
+- WAIT rows: 50% opacity + ⚠️ WAIT when netValue ≤ 0
+- UNKNOWN rows: when gas fetch fails (fail-closed, no false sweep)
+- Gas Tracker panel revealed — Win98 gas bars per chain
+- Solana rent reclaim detection — dead account count + USD value in banner
+- Status bar shows Live badges for all Phase 2 APIs
+
+### Files delivered
+```
+src/
+  gas.js          ← Etherscan V2 gas tracker (MATIC/ETH split)
+  prices.js       ← CoinGecko + Jupiter Price API (60s cache)
+  balances.js     ← Alchemy EVM + Helius Solana (live)
+  solana-rent.js  ← Dead Solana account detection
+  ui.js           ← renderGas(), renderSolanaRent(), 7-col table
+  app.js          ← gas + rent wired into fetchAndRender()
+```
 
 ---
 
