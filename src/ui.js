@@ -76,7 +76,7 @@ export function renderTable(dustTokens) {
 
     return `<tr style="${rowStyle}">
       <td><span class="chain-badge" style="background:${bgColor}">${escapeHtml(label)}</span></td>
-      <td>${escapeHtml(t.tokenSymbol)}${t.isRentAccounts ? ' &#x1F511;' : ''}</td>
+      <td>${escapeHtml(t.chain === 'solana' && t.tokenSymbol.length > 10 ? t.tokenSymbol.slice(0, 8) + '…' : t.tokenSymbol)}${t.isRentAccounts ? ' &#x1F511;' : ''}</td>
       <td>${balDisplay}</td>
       <td>$${fmt(t.usdValue)}</td>
       <td>${gasCell}</td>

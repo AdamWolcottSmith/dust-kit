@@ -82,7 +82,7 @@ async function fetchSolanaBalances(walletAddress, heliusKey) {
       if (!amount || amount.uiAmount === 0 || amount.uiAmount === null) return null
       return {
         chain: 'solana',
-        tokenSymbol: info.mint.slice(0, 6).toUpperCase(),
+        tokenSymbol: info.mint,  // full Solana mint address — priced via Jupiter API
         contractAddress: info.mint,
         rawBalance: amount.amount,
         decimals: amount.decimals,
