@@ -144,13 +144,12 @@ export function renderLedger(entries) {
 }
 
 export function renderWallets(wallets) {
-  const evmInputs = [
-    document.getElementById('wallet-evm-0'),
-    document.getElementById('wallet-evm-1'),
-  ]
   wallets.evm.forEach((addr, i) => {
-    if (evmInputs[i]) evmInputs[i].value = addr
+    const el = document.getElementById(`wallet-evm-${i}`)
+    if (el) el.value = addr
   })
-  const solInput = document.getElementById('wallet-sol-0')
-  if (solInput && wallets.solana[0]) solInput.value = wallets.solana[0]
+  wallets.solana.forEach((addr, i) => {
+    const el = document.getElementById(`wallet-sol-${i}`)
+    if (el) el.value = addr
+  })
 }
