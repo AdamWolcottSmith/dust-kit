@@ -42,6 +42,7 @@ async function fetchEvmBalancesForWallet(walletAddress, chain, apiKey) {
       if (meta.status !== 'fulfilled') return null
       const { symbol, decimals } = meta.value
       if (!symbol || decimals === null || decimals === undefined) return null
+      if (t.tokenBalance === null || t.tokenBalance === undefined) return null
       const rawBalance = BigInt(t.tokenBalance).toString()
       return {
         chain,
@@ -74,7 +75,9 @@ async function fetchSolanaBalances(walletAddress, heliusKey) {
 
   return (data.result?.value ?? [])
     .map(account => {
-      const info = account.account.data.parsed.info
+      const parsed = account.account?.data?.parsed
+      if (!parsed?.info) return null
+      const info = parsed.info
       const amount = info.tokenAmount
       if (!amount || amount.uiAmount === 0 || amount.uiAmount === null) return null
       return {
@@ -93,14 +96,14 @@ async function fetchSolanaBalances(walletAddress, heliusKey) {
 export async function fetchBalances(wallets) {
   const config = window.DUSTKIT_CONFIG
 
-  const evmJobs = wallets.evm.flatMap(wallet =>
+  const evmJobs = (wallets.evm ?? []).flatMap(wallet =>
     Object.keys(ALCHEMY_NETWORKS).map(chain =>
       fetchEvmBalancesForWallet(wallet, chain, config.alchemyKey)
         .catch(err => { console.warn(`EVM ${chain} ${wallet.slice(0,8)}:`, err.message); return [] })
     )
   )
 
-  const solJobs = wallets.solana.map(wallet =>
+  const solJobs = (wallets.solana ?? []).map(wallet =>
     fetchSolanaBalances(wallet, config.heliusKey)
       .catch(err => { console.warn(`Solana ${wallet.slice(0,8)}:`, err.message); return [] })
   )
